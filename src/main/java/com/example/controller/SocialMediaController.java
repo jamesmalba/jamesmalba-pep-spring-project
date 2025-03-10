@@ -5,10 +5,17 @@ import com.example.service.*;
 import org.springframework.http.HttpStatus; 
 import org.springframework.http.ResponseEntity; 
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.DeleteMapping; 
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestAttribute;
 import org.springframework.web.bind.annotation.RequestBody; 
+import org.springframework.web.bind.annotation.RequestParam; 
 import org.springframework.web.bind.annotation.ResponseBody; 
+import org.springframework.web.bind.annotation.PathVariable; 
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
 
 /**
  * TODO: You will need to write your own endpoints and handlers for your controller using Spring. The endpoints you will need can be
@@ -22,7 +29,7 @@ public class SocialMediaController {
     private AccountService accountService;
     private MessageService messageService;
 
-    public SocialMediaController(AccountService accountService) {
+    public SocialMediaController(AccountService accountService, MessageService messageService) {
         this.accountService = accountService;
         this.messageService = messageService;
     }
@@ -38,10 +45,52 @@ public class SocialMediaController {
 
     @PostMapping("/login")
     public ResponseEntity<Account> verifyLogin(@RequestBody Account account) {
-        Account savedAccount = accountService.verifyLogin(account);
-        if (savedAccount == null) {
+        Account verifiedAccount = accountService.verifyLogin(account);
+        if (verifiedAccount == null) {
             return ResponseEntity.status(401).body(null);
         }
-        return ResponseEntity.status(200).body(savedAccount);
+        return ResponseEntity.status(200).body(verifiedAccount);
+    }
+
+    @PostMapping("/messages")
+    public ResponseEntity<Message> postMessage(@RequestBody Message message) {
+        Message savedMessage = messageService.createMessage(message);
+        if (savedMessage == null) {
+            return ResponseEntity.status(400).body(null);
+        }
+        return ResponseEntity.status(200).body(savedMessage);
+    }
+
+    @GetMapping("/messages")
+    public ResponseEntity<List<Message>> getAllMessages() {
+        return ResponseEntity.status(200).body(messageService.getAllMessages());
+    }
+    
+    @GetMapping("/messages/{messageId}")
+    public ResponseEntity<Message> getMessageByMessageId(@PathVariable int messageId) {
+        return ResponseEntity.status(200).body(messageService.getMessageById(messageId));
+    }
+
+    @DeleteMapping("/messages/{messageId}")
+    public ResponseEntity<Integer> deleteMessageById(@PathVariable int messageId) {
+        int rowsUpdated = messageService.deleteMessageById(messageId);
+        if (rowsUpdated == 0) {
+            return ResponseEntity.status(200).body(null);
+        }
+        else return ResponseEntity.status(200).body(rowsUpdated);
+    }
+
+    @PatchMapping("/messages/{messageId}") 
+    public ResponseEntity<Integer> updateMessageById(@PathVariable int messageId, @RequestParam String messageText) {
+        int rowsUpdated = messageService.updateMessageById(messageId, messageText);
+        if (rowsUpdated == 0) {
+            return ResponseEntity.status(400).body(null);
+        }
+        return ResponseEntity.status(200).body(rowsUpdated);
+    }
+
+    @GetMapping("/accounts/{accountId}/messages")
+    public ResponseEntity<List<Message>> getAllMessagesByAccountId(@PathVariable int accountId) {
+        return ResponseEntity.status(200).body(messageService.getAllMessagesByAccountId(accountId));
     }
 }

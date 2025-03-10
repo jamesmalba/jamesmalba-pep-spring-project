@@ -1,6 +1,7 @@
 package com.example.service;
 
 import com.example.entity.Message;
+import com.example.repository.AccountRepository;
 import com.example.repository.MessageRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -13,15 +14,21 @@ import java.util.Optional;
 @Transactional
 public class MessageService {
 
-    MessageRepository messageRepository;
+    private MessageRepository messageRepository;
+    private AccountRepository accountRepository;
 
     @Autowired
-    public MessageService(MessageRepository messageRepository) {
+    public MessageService(MessageRepository messageRepository, AccountRepository accountRepository) {
         this.messageRepository = messageRepository;
+        this.accountRepository = accountRepository;
     }
 
     // Create new message 
     public Message createMessage(Message message) {
+        String messageText = message.getMessageText();
+        int postedBy = message.getPostedBy();
+        if (messageText.isEmpty() || messageText.length() > 255) return null;
+        if (!accountRepository.findByAccountId(postedBy).isPresent()) return null;
         return messageRepository.save(message);
     }
 
@@ -52,6 +59,8 @@ public class MessageService {
 
     // Update message by message id
     public int updateMessageById(int id, String messageText) {
+        if (messageText.length() == 0) return 0;
+
         Optional<Message> optionalMessage = messageRepository.findById(id);
         if (optionalMessage.isPresent()) {
             if (messageText.length() > 255) {
